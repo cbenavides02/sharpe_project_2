@@ -1,18 +1,29 @@
 # Part 1: exact_F2 Function
 
 - Local Results:
-  - beans
+  - Time Elapsed:
+  - Estimate: 
 - GCP Results (1 driver, 4 machines w/ 2x N1 cores):
+  - Time Elapsed:
+  - Estimate: 
 
 # Part 2: Tug_of_War Function
 
 - Local Results:
+  - Time Elapsed:
+  - Estimate: 
 - GCP Results (1 driver, 4 machines w/ 2x N1 cores):
+  - Time Elapsed:
+  - Estimate: 
 
 # Part 3: BJKST Function
 
 - Local Results:
+  - Time Elapsed:
+  - Estimate: 
 - GCP Results (1 driver, 4 machines w/ 2x N1 cores):
+  - Time Elapsed:
+  - Estimate: 
 
 # Part 4: Comparison
 
