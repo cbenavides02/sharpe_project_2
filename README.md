@@ -16,7 +16,7 @@
 # Part 4: Comparison
 
 | Algorithm  | Run Time | Results |
-| __________ | ________ | _______ |
+| --- | --- | --- |
 | exact_F2   |          |         | 
 | Tug_of_War |          |         |
 | BJKST      |          |         |
