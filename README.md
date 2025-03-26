@@ -1,6 +1,7 @@
 # Part 1: exact_F2 Function
 
 - Local Results:
+  - beans
 - GCP Results (1 driver, 4 machines w/ 2x N1 cores):
 
 # Part 2: Tug_of_War Function
