@@ -10,8 +10,8 @@
 # Part 2: Tug_of_War Function
 
 - Local Results:
-  - Time Elapsed:
-  - Estimate: 
+  - Time Elapsed: 9624 sec 
+  - Estimate: 21464343
 - GCP Results (1 driver, 4 machines w/ 2x N4 cores):
   - Time Elapsed:
   - Estimate: 
