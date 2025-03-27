@@ -1,5 +1,6 @@
 package project_2
 
+
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.functions._
 import org.apache.spark.rdd._
@@ -63,27 +64,27 @@ object main{
     }
   }
 
-  class BJKSTSketch(bucket_in: Set[(String, Int)] ,  z_in: Int, bucket_size_in: Int) extends Serializable {
+//  class BJKSTSketch(bucket_in: Set[(String, Int)] ,  z_in: Int, bucket_size_in: Int) extends Serializable {
 /* A constructor that requies intialize the bucket and the z value. The bucket size is the bucket size of the sketch. */
 
-    var bucket: Set[(String, Int)] = bucket_in
-    var z: Int =
+  //  var bucket: Set[(String, Int)] = bucket_in
+    //var z: Int = z_in
 
-    val BJKST_bucket_size = bucket_size_in;z_in
+   // val BJKST_bucket_size = bucket_size_in
 
-    def this(s: String, z_of_s: Int, bucket_size_in: Int){
+    //def this(s: String, z_of_s: Int, bucket_size_in: Int){
       /* A constructor that allows you pass in a single string, zeroes of the string, and the bucket size to initialize the sketch */
-      this(Set((s, z_of_s )) , z_of_s, bucket_size_in)
-    }
+    //  this(Set((s, z_of_s )) , z_of_s, bucket_size_in)
+   // }
 
-    def +(that: BJKSTSketch): BJKSTSketch = {    /* Merging two sketches */
+    //def +(that: BJKSTSketch): BJKSTSketch = {    /* Merging two sketches */
 
-    }
+   // }
 
-    def add_string(s: String, z_of_s: Int): BJKSTSketch = {   /* add a string to the sketch */
+   // def add_string(s: String, z_of_s: Int): BJKSTSketch = {   /* add a string to the sketch */
 
-    }
-  }
+  //  }
+ // } 
 
 
   def tidemark(x: RDD[String], trials: Int): Double = {
@@ -99,13 +100,67 @@ object main{
   }
 
 
-  def BJKST(x: RDD[String], width: Int, trials: Int) : Double = {
+ // def BJKST(x: RDD[String], width: Int, trials: Int) : Double = {
 
-  }
+ // }
 
 
   def Tug_of_War(x: RDD[String], width: Int, depth:Int) : Long = {
+    // Total number of sketches
+    val totalSketches = width * depth
 
+    // Create a matrix of hash functions: depth rows and width columns.
+    // Each entry is a function: String => Int, that returns either 1 or -1.
+    val hashFuncs: Array[Array[String => Long]] = Array.tabulate(depth, width) { (d, w) =>
+    new four_universal_Radamacher_hash_function().hash(_: String)
+    }
+
+    // Broadcast the matrix so each worker can use the same hash functions.
+    val broadcastHashFuncs = x.sparkContext.broadcast(hashFuncs)
+
+    // Zero value: an array of Long of length totalSketches, all initialized to 0.
+    val zero = Array.fill[Long](totalSketches)(0L)
+
+    // Aggregate the contributions for each sketch.
+    val sketchSums: Array[Long] = x.aggregate(zero)(
+    // For each string, update each entry in the accumulator with the corresponding hash value.
+    (acc, s) => {
+      val funcs = broadcastHashFuncs.value
+      var idx = 0
+      for (d <- 0 until depth; w <- 0 until width) {
+        acc(idx) += funcs(d)(w)(s)
+        idx += 1
+      }
+      acc
+    },
+    // Merge two accumulators by element-wise summing.
+    (acc1, acc2) => {
+      for (i <- 0 until totalSketches) {
+        acc1(i) += acc2(i)
+      }
+      acc1
+     }
+    )
+
+    // Square each sketch's sum to get an unbiased estimator for F2.
+    val squaredSketches = sketchSums.map(sum => sum * sum)
+
+    // For each depth row (group of width sketches), compute the mean of the squared values.
+    val rowMeans: Array[Double] = Array.tabulate(depth) { d =>
+    val row = squaredSketches.slice(d * width, d * width + width)
+    row.sum.toDouble / width
+    }
+
+    // Compute the median of the depth means.
+    val sortedMeans = rowMeans.sorted
+    val median: Double = if (depth % 2 == 1) {
+    sortedMeans(depth / 2)
+  } else {
+    (sortedMeans(depth / 2 - 1) + sortedMeans(depth / 2)) / 2.0
+  }
+
+    // Return the median as a Long approximation to F2.
+    median.toLong
   }
 
 
@@ -116,7 +171,10 @@ object main{
 
 
   def exact_F2(x: RDD[String]) : Long = {
-
+    // map each plate to a tuple with count 1, then sum them by plate
+    // then map each plate count to its square, then add the squares
+    val ans = x.map(i => (i,1L)).reduceByKey(_+_).map {case (_,count) => count*count}.reduce(_+_)
+    return ans
   }
 
 
@@ -141,13 +199,13 @@ object main{
         println("Usage: project_2 input_path BJKST #buckets trials")
         sys.exit(1)
       }
-      val ans = BJKST(dfrdd, args(2).toInt, args(3).toInt)
+   //   val ans = BJKST(dfrdd, args(2).toInt, args(3).toInt)
 
       val endTimeMillis = System.currentTimeMillis()
       val durationSeconds = (endTimeMillis - startTimeMillis) / 1000
 
       println("==================================")
-      println("BJKST Algorithm. Bucket Size:"+ args(2) + ". Trials:" + args(3) +". Time elapsed:" + durationSeconds + "s. Estimate: "+ans)
+     // println("BJKST Algorithm. Bucket Size:"+ args(2) + ". Trials:" + args(3) +". Time elapsed:" + durationSeconds + "s. Estimate: "+ans)
       println("==================================")
     }
     else if(args(1)=="tidemark") {
