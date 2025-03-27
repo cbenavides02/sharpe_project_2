@@ -64,27 +64,64 @@ object main{
     }
   }
 
-//  class BJKSTSketch(bucket_in: Set[(String, Int)] ,  z_in: Int, bucket_size_in: Int) extends Serializable {
-/* A constructor that requies intialize the bucket and the z value. The bucket size is the bucket size of the sketch. */
+ // BJKST Sketch class: stores the k smallest normalized hash values.
+class BJKSTSketch(val bucketSize: Int) extends Serializable {
+  // minSet holds the smallest normalized hash values (each in [0,1)).
+  var minSet: List[Double] = List.empty[Double]
 
-  //  var bucket: Set[(String, Int)] = bucket_in
-    //var z: Int = z_in
+  // Add an element using the provided hash function.
+  def add(s: String, h: hash_function): Unit = {
+    val r = h.hash(s).toDouble / h.p.toDouble  // normalize to [0,1)
+    // Insert and keep only the smallest bucketSize values.
+    minSet = (r :: minSet).sorted.take(bucketSize)
+  }
 
-   // val BJKST_bucket_size = bucket_size_in
+  // Merge with another sketch.
+  def merge(that: BJKSTSketch): BJKSTSketch = {
+    val merged = new BJKSTSketch(bucketSize)
+    merged.minSet = (this.minSet ++ that.minSet).sorted.take(bucketSize)
+    merged
+  }
 
-    //def this(s: String, z_of_s: Int, bucket_size_in: Int){
-      /* A constructor that allows you pass in a single string, zeroes of the string, and the bucket size to initialize the sketch */
-    //  this(Set((s, z_of_s )) , z_of_s, bucket_size_in)
-   // }
+  // Estimate the number of distinct elements.
+  def estimate(): Double = {
+    if (minSet.size < bucketSize || minSet.isEmpty) 0.0
+    else bucketSize / minSet.last
+  }
+}
 
-    //def +(that: BJKSTSketch): BJKSTSketch = {    /* Merging two sketches */
+// Helper function: compute one trial estimate using a BJKST sketch.
+def computeTrialEstimate(x: RDD[String], width: Int): Double = {
+  // Create a new hash function for this trial.
+  val h = new hash_function(2147483587)
+  // Use aggregate to compute the k smallest normalized hash values.
+  val zero: List[Double] = List.empty[Double]
+  def seqOp(acc: List[Double], s: String): List[Double] = {
+    val r = h.hash(s).toDouble / h.p.toDouble
+    (r :: acc).sorted.take(width)
+  }
+  def combOp(acc1: List[Double], acc2: List[Double]): List[Double] = {
+    (acc1 ++ acc2).sorted.take(width)
+  }
+  val minSet = x.aggregate(zero)(seqOp, combOp)
+  if (minSet.size < width || minSet.isEmpty) 0.0
+  else width / minSet.last
+}
 
-   // }
+def BJKST(x: RDD[String], width: Int, trials: Int): Double = {
+  val estimates = (1 to trials).map { _ =>
+    computeTrialEstimate(x, width)
+  }.filter(_ > 0).toList
 
-   // def add_string(s: String, z_of_s: Int): BJKSTSketch = {   /* add a string to the sketch */
+  if (estimates.isEmpty) 0.0
+  else {
+    val sortedEstimates = estimates.sorted
+    val n = sortedEstimates.size
+    if (n % 2 == 1) sortedEstimates(n / 2)
+    else (sortedEstimates(n / 2 - 1) + sortedEstimates(n / 2)) / 2.0
+  }
+}
 
-  //  }
- // } 
 
 
   def tidemark(x: RDD[String], trials: Int): Double = {
@@ -99,10 +136,6 @@ object main{
     return ans
   }
 
-
- // def BJKST(x: RDD[String], width: Int, trials: Int) : Double = {
-
- // }
 
 
   def Tug_of_War(x: RDD[String], width: Int, depth:Int) : Long = {
