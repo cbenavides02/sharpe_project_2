@@ -19,8 +19,8 @@
 # Part 3: BJKST Function
 
 - Local Results:
-  - Time Elapsed:
-  - Estimate: 
+  - Time Elapsed: 235 sec
+  - Estimate: 4.533935038816336E7
 - GCP Results (1 driver, 4 machines w/ 2x N4 cores):
   - Time Elapsed:
   - Estimate: 
