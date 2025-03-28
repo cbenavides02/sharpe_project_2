@@ -18,9 +18,10 @@
 
 # Part 3: BJKST Function
 
+-F0 Result:7406649
 - Local Results:
-  - Time Elapsed: 235 sec
-  - Estimate: 4.533935038816336E7
+  - Time Elapsed: 995 s.
+  -  Estimate: 3.984051773589106E7
 - GCP Results (1 driver, 4 machines w/ 2x N4 cores):
   - Time Elapsed:
   - Estimate: 
